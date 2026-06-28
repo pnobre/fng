@@ -7,7 +7,7 @@ Each task maps to a GitHub issue.
 
 - [/] #1 Project scaffolding (solution, Paket, FAKE, tools)
 - [/] #2 XOR-decrypting binary reader (`0x1A`)
-- [ ] #3 Header parser (magic, menus, title, credits)
+- [/] #3 Header parser (magic, menus, title, credits)
 - [ ] #4 Entry model + chain walker (short/long)
 - [ ] #5 Text decoder (RLE spaces + control codes)
 - [ ] #6 CLI console dump (header, menus, entries)
