@@ -6,7 +6,7 @@ Each task maps to a GitHub issue.
 ## Phase 1 — Decoder + console dump
 
 - [/] #1 Project scaffolding (solution, Paket, FAKE, tools)
-- [ ] #2 XOR-decrypting binary reader (`0x1A`)
+- [/] #2 XOR-decrypting binary reader (`0x1A`)
 - [ ] #3 Header parser (magic, menus, title, credits)
 - [ ] #4 Entry model + chain walker (short/long)
 - [ ] #5 Text decoder (RLE spaces + control codes)
