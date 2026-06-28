@@ -5,8 +5,10 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Fixtures.fs" />
     <Compile Include="NgReaderTests.fs" />
     <Compile Include="HeaderTests.fs" />
+    <Compile Include="EntryTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
