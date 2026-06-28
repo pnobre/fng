@@ -6,6 +6,7 @@
   <ItemGroup>
     <Compile Include="Codec.fs" />
     <Compile Include="NgReader.fs" />
+    <Compile Include="Header.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

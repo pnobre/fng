@@ -6,6 +6,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="NgReaderTests.fs" />
+    <Compile Include="HeaderTests.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="fixtures/MOUSE.NG" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\PNobre.NortonGuides.Core\PNobre.NortonGuides.Core.fsproj" />

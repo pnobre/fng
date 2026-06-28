@@ -66,3 +66,15 @@ type NgReader(data: byte[]) =
         // ponytail: Latin1 is byte-faithful and exact for the ASCII header/menu text;
         // CP437 box-drawing and accented glyphs arrive with the text decoder (#5).
         Encoding.Latin1.GetString(bytes, 0, len)
+
+    /// Read a NUL-terminated string (menu/entry text), consuming the terminator.
+    /// Bounded by the end of the buffer, which raises `EndOfStreamException`.
+    member this.ReadStringZ(?decrypt) =
+        let sb = StringBuilder()
+        let mutable b = this.ReadByte(?decrypt = decrypt)
+
+        while b <> 0uy do
+            sb.Append(char b) |> ignore
+            b <- this.ReadByte(?decrypt = decrypt)
+
+        sb.ToString()
