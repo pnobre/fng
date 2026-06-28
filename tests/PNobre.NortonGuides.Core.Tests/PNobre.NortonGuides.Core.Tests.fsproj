@@ -9,6 +9,7 @@
     <Compile Include="NgReaderTests.fs" />
     <Compile Include="HeaderTests.fs" />
     <Compile Include="EntryTests.fs" />
+    <Compile Include="TextTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
