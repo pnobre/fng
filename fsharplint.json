@@ -1,0 +1,21 @@
+{
+    "ignore": [
+        "obj",
+        "bin"
+    ],
+    "rules": {
+        "unusedOpens": {
+            "enabled": true
+        },
+        "redundantNewKeyword": {
+            "enabled": true
+        },
+        "redundantQualifier": {
+            "enabled": true
+        },
+        "formatting": {
+            "typedItemSpacing": { "enabled": true },
+            "tupleCommaSpacing": { "enabled": true }
+        }
+    }
+}

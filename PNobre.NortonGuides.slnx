@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PNobre.NortonGuides.Build/PNobre.NortonGuides.Build.fsproj" />
+    <Project Path="src/PNobre.NortonGuides.Cli/PNobre.NortonGuides.Cli.fsproj" />
+    <Project Path="src/PNobre.NortonGuides.Core/PNobre.NortonGuides.Core.fsproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PNobre.NortonGuides.Core.Tests/PNobre.NortonGuides.Core.Tests.fsproj" />
+  </Folder>
+</Solution>
