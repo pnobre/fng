@@ -1,0 +1,23 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+build/bin/
+build/obj/
+TestResults/
+*.user
+
+# .NET / IDE
+.vs/
+.idea/
+.vscode/
+*.DotSettings.user
+
+# FAKE
+.fake/
+
+# Paket
+.paket/paket.exe
+paket-files/
+
+# macOS
+.DS_Store
