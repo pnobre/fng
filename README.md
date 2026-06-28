@@ -27,10 +27,16 @@ Early development. See [`docs/plan.md`](docs/plan.md) for the roadmap.
 
 ## Building
 
+Build automation is a **FAKE** project (`src/PNobre.NortonGuides.Build`) targeting
+.NET 10. Run it with `dotnet run` — the same command on Windows, macOS and Linux
+(no shell scripts):
+
 ```sh
-./build.sh          # full pipeline: CheckFormat → Lint → Build → Test
-./build.sh Format   # reformat with Fantomas
+dotnet tool restore                                                     # first run: paket, fantomas, fsharplint
+dotnet run --project src/PNobre.NortonGuides.Build                      # full pipeline: CheckFormat → Lint → Build → Test
+dotnet run --project src/PNobre.NortonGuides.Build -- --target Format   # reformat with Fantomas
 ```
 
-Requires the .NET 10 SDK. NuGet dependencies are managed with **Paket**; build
-automation with **FAKE**.
+Requires the .NET 10 SDK. NuGet dependencies are managed with **Paket**. FAKE runs
+as a net10 project rather than a `build.fsx` script, because FAKE's script runner
+needs the .NET 6 reference pack.

@@ -18,9 +18,12 @@ WebAssembly head (Phase 3) can reuse it.
 ## Tooling
 
 - **Paket** manages NuGet dependencies (`paket.dependencies` + per-project `paket.references`).
-- **FAKE** drives the build (`src/PNobre.NortonGuides.Build`).
+- **FAKE** drives the build as a net10 project (`src/PNobre.NortonGuides.Build`), run
+  cross-platform with `dotnet run` (no shell scripts; FAKE's `build.fsx` script runner
+  needs net6 and is not used).
 - Anything pushed MUST build, lint (`dotnet fsharplint`), and be formatted (`dotnet fantomas`).
-  Use `./build.sh Format` then `./build.sh`.
+  Run `dotnet run --project src/PNobre.NortonGuides.Build -- --target Format`, then
+  `dotnet run --project src/PNobre.NortonGuides.Build`.
 
 ## Development Process
 
@@ -31,8 +34,8 @@ WebAssembly head (Phase 3) can reuse it.
 3. Write unit tests first (TDD).
 4. Implement.
 5. Update docs in `docs/` and the issue checklist in `docs/plan.md` (`[ ]` → `[/]`).
-6. Format + lint (`./build.sh Format`).
-7. Verify green (`./build.sh`).
+6. Format + lint (`dotnet run --project src/PNobre.NortonGuides.Build -- --target Format`).
+7. Verify green (`dotnet run --project src/PNobre.NortonGuides.Build`).
 8. Commit, push, open a PR referencing the issue.
 
 ### Bug fixing
