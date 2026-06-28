@@ -2,13 +2,12 @@ namespace PNobre.NortonGuides.Core
 
 open System.IO
 
-/// A single option on a guide menu: its label and the file offset it jumps to.
-type MenuPrompt = { Text: string; Offset: int }
+/// A label paired with the file offset it jumps to. Used by menu prompts, the
+/// lines of a short entry, and see-also cross-references.
+type Link = { Text: string; Offset: int }
 
 /// A menu from the guide's menu bar: a title and its prompts.
-type Menu =
-    { Title: string
-      Prompts: MenuPrompt list }
+type Menu = { Title: string; Prompts: Link list }
 
 /// The decoded header of a Norton Guide: title, credit lines, and menu bar.
 type Header =
@@ -47,25 +46,28 @@ module Header =
         { Title = title
           Prompts = List.map2 (fun text offset -> { Text = text; Offset = offset }) labels offsets }
 
+    /// Read the header and menu bar, leaving the reader positioned at the first
+    /// entry. Throws `InvalidDataException` for a non-guide / Expert Help file.
+    let read (r: NgReader) : Header =
+        match r.ReadString 2 with
+        | "EH" -> raise (InvalidDataException "Expert Help (.EH) guides are not supported yet")
+        | "NG" ->
+            r.Position <- 6 // skip 4 unknown header bytes
+            let menuCount = int (r.ReadUInt16())
+            let title = r.ReadString TitleLength
+            let credits = [ for _ in 1..CreditLines -> r.ReadString CreditLength ]
+            let menus = [ for _ in 1..menuCount -> readMenu r ]
+
+            { Title = title
+              Credits = credits
+              Menus = menus }
+        | other -> raise (InvalidDataException $"not a Norton Guide file (magic: {other})")
+
     /// Decode the header (and menu bar) from a guide image. Returns `Error` for a
     /// non-Norton-Guide file or truncated data rather than throwing.
     let parse (data: byte[]) : Result<Header, string> =
         try
-            let r = NgReader(data)
-
-            match r.ReadString 2 with
-            | "EH" -> Error "Expert Help (.EH) guides are not supported yet"
-            | "NG" ->
-                r.Position <- 6 // skip 4 unknown header bytes
-                let menuCount = int (r.ReadUInt16())
-                let title = r.ReadString TitleLength
-                let credits = [ for _ in 1..CreditLines -> r.ReadString CreditLength ]
-                let menus = [ for _ in 1..menuCount -> readMenu r ]
-
-                Ok
-                    { Title = title
-                      Credits = credits
-                      Menus = menus }
-            | other -> Error $"not a Norton Guide file (magic: {other})"
-        with :? EndOfStreamException as ex ->
-            Error ex.Message
+            Ok(read (NgReader data))
+        with
+        | :? EndOfStreamException as ex -> Error ex.Message
+        | :? InvalidDataException as ex -> Error ex.Message

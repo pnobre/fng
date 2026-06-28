@@ -1,6 +1,5 @@
 module PNobre.NortonGuides.Core.Tests.HeaderTests
 
-open System
 open System.Text
 open Xunit
 open PNobre.NortonGuides.Core
@@ -18,10 +17,7 @@ let private headerBytes (title: string) (credits: string list) =
     credits |> List.iteri (fun i c -> put (48 + i * 66) c)
     buf
 
-// A real Norton Guide, committed as a public-domain fixture (its own credits state
-// "No Copyright on this database, it's Public Domain"). Reused by later entry tests.
-let private mouseNg =
-    IO.File.ReadAllBytes(IO.Path.Combine(AppContext.BaseDirectory, "fixtures", "MOUSE.NG"))
+let private mouseNg = Fixtures.mouseNg
 
 let private parseOk data =
     match Header.parse data with
