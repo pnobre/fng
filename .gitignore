@@ -6,6 +6,9 @@ build/obj/
 TestResults/
 *.user
 
+# Claude Code local settings (machine-specific permissions; never commit)
+.claude/settings.local.json
+
 # .NET / IDE
 .vs/
 .idea/
