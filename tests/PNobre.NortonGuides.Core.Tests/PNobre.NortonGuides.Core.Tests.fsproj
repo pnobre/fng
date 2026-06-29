@@ -10,6 +10,7 @@
     <Compile Include="HeaderTests.fs" />
     <Compile Include="EntryTests.fs" />
     <Compile Include="TextTests.fs" />
+    <Compile Include="CorpusTests.fs" />
   </ItemGroup>
 
   <ItemGroup>

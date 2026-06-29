@@ -5,13 +5,13 @@ Each task maps to a GitHub issue.
 
 ## Phase 1 — Decoder + console dump
 
-- [/] #1 Project scaffolding (solution, Paket, FAKE, tools)
-- [/] #2 XOR-decrypting binary reader (`0x1A`)
-- [/] #3 Header parser (magic, menus, title, credits)
-- [/] #4 Entry model + chain walker (short/long)
-- [/] #5 Text decoder (RLE spaces + control codes)
-- [/] #6 CLI console dump (header, menus, entries)
-- [ ] #7 Corpus sweep test (parse all ~60 guides)
+- [x] #1 Project scaffolding (solution, Paket, FAKE, tools)
+- [x] #2 XOR-decrypting binary reader (`0x1A`)
+- [x] #3 Header parser (magic, menus, title, credits)
+- [x] #4 Entry model + chain walker (short/long)
+- [x] #5 Text decoder (RLE spaces + control codes)
+- [x] #6 CLI console dump (header, menus, entries)
+- [/] #7 Corpus sweep test (parse all ~60 guides)
 
 ## Phase 2 — Avalonia desktop viewer
 

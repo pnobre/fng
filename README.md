@@ -44,9 +44,13 @@ Build automation is a **FAKE** project (`src/PNobre.NortonGuides.Build`) targeti
 
 ```sh
 dotnet tool restore                                                     # first run: paket, fantomas, fsharplint
+export FNG_CORPUS=/path/to/norton-guides                                # directory of .NG files for the corpus sweep test
 dotnet run --project src/PNobre.NortonGuides.Build                      # full pipeline: CheckFormat → Lint → Build → Test
 dotnet run --project src/PNobre.NortonGuides.Build -- --target Format   # reformat with Fantomas
 ```
+
+The corpus sweep test requires `FNG_CORPUS` to point at a directory of `.NG`
+guides; without it that test fails.
 
 Requires the .NET 10 SDK. NuGet dependencies are managed with **Paket**. FAKE runs
 as a net10 project rather than a `build.fsx` script, because FAKE's script runner
