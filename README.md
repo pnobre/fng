@@ -25,6 +25,17 @@ Early development. See [`docs/plan.md`](docs/plan.md) for the roadmap.
 | `Fng.Build`      | FAKE build pipeline (Format → Lint → Build → Test).      |
 | `Fng.Core.Tests` | xUnit + FsCheck tests for the codec.                     |
 
+## Usage
+
+Decode a guide to the terminal (ANSI colour when writing to a TTY, plain text when piped):
+
+```sh
+fng MOUSE.NG          # header, menu bar, and every entry, with styled text
+fng --raw MOUSE.NG    # show the undecoded ^ control codes and RLE bytes
+```
+
+Exits non-zero on a missing file or a non-Norton-Guide input.
+
 ## Building
 
 Build automation is a **FAKE** project (`src/PNobre.NortonGuides.Build`) targeting
