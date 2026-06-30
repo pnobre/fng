@@ -19,16 +19,27 @@ type GuideState =
     | Failed of string
 
 type Model =
-    { State: GuideState
-      Source: string option }
+    {
+        State: GuideState
+        Source: string option
+        /// The middle pane: the lines of the current short entry.
+        List: Link list
+        /// The right pane: the entry being read.
+        Content: Entry option
+    }
 
 type Msg =
     | OpenRequested
     | OpenCancelled
     | Opened of name: string * result: Result<Guide, string>
+    | Navigate of offset: int
 
 let init () =
-    { State = Empty; Source = None }, Cmd.none
+    { State = Empty
+      Source = None
+      List = []
+      Content = None },
+    Cmd.none
 
 let update (openFile: OpenFile) (msg: Msg) (model: Model) =
     match msg with
@@ -53,51 +64,112 @@ let update (openFile: OpenFile) (msg: Msg) (model: Model) =
         model, [ run ]
     | OpenCancelled -> model, Cmd.none
     | Opened(name, result) ->
-        let state =
-            match result with
-            | Ok guide -> Loaded guide
-            | Error e -> Failed e
+        match result with
+        | Ok guide ->
+            { model with
+                State = Loaded guide
+                Source = Some name
+                List = []
+                Content = None },
+            Cmd.none
+        | Error e ->
+            { model with
+                State = Failed e
+                Source = Some name },
+            Cmd.none
+    | Navigate offset ->
+        match model.State with
+        | Loaded guide ->
+            match guide |> Guide.entryAt offset with
+            | Some entry ->
+                match entry.Body with
+                | Short lines ->
+                    { model with
+                        List = lines
+                        Content = None },
+                    Cmd.none
+                | Long _ -> { model with Content = Some entry }, Cmd.none
+            | None -> model, Cmd.none
+        | _ -> model, Cmd.none
 
-        { State = state; Source = Some name }, Cmd.none
+let private monospace = FontFamily("Menlo, Consolas, Courier New, monospace")
 
-let private guideInfo (guide: Guide) : IView =
-    let title =
-        TextBlock.create
-            [ TextBlock.text guide.Header.Title
-              TextBlock.fontSize 24.0
-              TextBlock.fontWeight FontWeight.Bold ]
-        :> IView
+let private listButton dispatch (link: Link) : IView =
+    Button.create
+        [ Button.content (Text.plain link.Text)
+          Button.background Brushes.Transparent
+          Button.horizontalAlignment HorizontalAlignment.Stretch
+          Button.horizontalContentAlignment HorizontalAlignment.Left
+          Button.padding (Thickness(8.0, 4.0))
+          Button.onClick (fun _ -> dispatch (Navigate link.Offset)) ]
 
-    let credits =
-        guide.Header.Credits
-        |> List.filter (fun c -> c.Trim() <> "")
-        |> List.map (fun c ->
-            TextBlock.create [ TextBlock.text (c.Trim()); TextBlock.foreground Brushes.Gray ] :> IView)
+let private hint (text: string) : IView =
+    TextBlock.create
+        [ TextBlock.text text
+          TextBlock.foreground Brushes.Gray
+          TextBlock.margin (Thickness 12.0) ]
 
-    let summary =
-        TextBlock.create
-            [ TextBlock.text $"{guide.Entries.Length} entries · {guide.Header.Menus.Length} menus"
-              TextBlock.margin (Thickness(0.0, 12.0, 0.0, 0.0)) ]
-        :> IView
+let private scroll (children: IView list) : IView =
+    ScrollViewer.create [ ScrollViewer.content (StackPanel.create [ StackPanel.children children ]) ]
 
-    StackPanel.create
-        [ StackPanel.spacing 6.0
-          StackPanel.children ((title :: credits) @ [ summary ]) ]
+let private menuPane dispatch (guide: Guide) : IView =
+    scroll
+        [ for menu in guide.Header.Menus do
+              TextBlock.create
+                  [ TextBlock.text menu.Title
+                    TextBlock.fontWeight FontWeight.Bold
+                    TextBlock.margin (Thickness(8.0, 10.0, 8.0, 2.0)) ]
 
-let private content (model: Model) : IView =
+              yield! menu.Prompts |> List.map (listButton dispatch) ]
+
+let private listPane dispatch (links: Link list) : IView =
+    match links with
+    | [] -> hint "Pick a menu entry."
+    | _ -> scroll (links |> List.map (listButton dispatch))
+
+let private contentPane (entry: Entry option) : IView =
+    match entry with
+    | None -> hint "Select an entry to read."
+    | Some entry ->
+        let lines =
+            match entry.Body with
+            | Long(text, _) -> text
+            | Short links -> links |> List.map _.Text
+
+        // ponytail: plain text for now; styled spans (bold/colour) arrive with #22.
+        scroll
+            [ for line in lines -> TextBlock.create [ TextBlock.text (Text.plain line); TextBlock.fontFamily monospace ] ]
+
+let private pane column (child: IView) : IView =
+    Border.create [ Grid.column column; Border.child child ]
+
+let private threePane dispatch (model: Model) (guide: Guide) : IView =
+    Grid.create
+        [ Grid.columnDefinitions "260,4,300,4,*"
+          Grid.children
+              [ pane 0 (menuPane dispatch guide)
+                GridSplitter.create [ Grid.column 1; GridSplitter.background Brushes.DimGray ]
+                pane 2 (listPane dispatch model.List)
+                GridSplitter.create [ Grid.column 3; GridSplitter.background Brushes.DimGray ]
+                pane 4 (contentPane model.Content) ] ]
+
+let private body (model: Model) (dispatch: Msg -> unit) : IView =
     match model.State with
-    | Empty ->
-        TextBlock.create
-            [ TextBlock.text "No guide loaded — click Open to load a .NG file"
-              TextBlock.foreground Brushes.Gray ]
+    | Empty -> hint "No guide loaded — click Open to load a .NG file."
     | Failed e ->
         TextBlock.create
             [ TextBlock.text $"Could not open guide: {e}"
               TextBlock.foreground Brushes.IndianRed
-              TextBlock.textWrapping TextWrapping.Wrap ]
-    | Loaded guide -> guideInfo guide
+              TextBlock.textWrapping TextWrapping.Wrap
+              TextBlock.margin (Thickness 12.0) ]
+    | Loaded guide -> threePane dispatch model guide
 
 let view (model: Model) (dispatch: Msg -> unit) =
+    let title =
+        match model.State with
+        | Loaded guide -> guide.Header.Title
+        | _ -> model.Source |> Option.defaultValue ""
+
     let toolbar =
         Border.create
             [ Border.dock Dock.Top
@@ -110,12 +182,9 @@ let view (model: Model) (dispatch: Msg -> unit) =
                         StackPanel.children
                             [ Button.create [ Button.content "Open…"; Button.onClick (fun _ -> dispatch OpenRequested) ]
                               TextBlock.create
-                                  [ TextBlock.text (model.Source |> Option.defaultValue "")
+                                  [ TextBlock.text title
                                     TextBlock.verticalAlignment VerticalAlignment.Center
                                     TextBlock.foreground Brushes.LightGray ] ] ]
               ) ]
 
-    DockPanel.create
-        [ DockPanel.children
-              [ toolbar
-                Border.create [ Border.padding (Thickness 24.0); Border.child (content model) ] ] ]
+    DockPanel.create [ DockPanel.children [ toolbar; body model dispatch ] ]
