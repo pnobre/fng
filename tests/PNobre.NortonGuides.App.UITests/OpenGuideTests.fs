@@ -99,3 +99,24 @@ let ``Selecting a menu prompt then a list item shows the entry`` () =
 
     click window (buttonWith window "Reset Driver and Read Status").Value // show the entry
     Assert.True(pumpUntil (fun () -> hasText window "INT 33"), "entry content did not appear")
+
+[<AvaloniaFact>]
+let ``Next then Back navigate the entry chain`` () =
+    let window = show (MainWindow(stub "MOUSE.NG" mouseBytes))
+    click window (firstButton window)
+    Assert.True(pumpUntil (fun () -> (buttonWith window "Int 51 Services").IsSome), "menu did not load")
+    click window (buttonWith window "Int 51 Services").Value
+
+    Assert.True(
+        pumpUntil (fun () -> (buttonWith window "Reset Driver and Read Status").IsSome),
+        "list did not populate"
+    )
+
+    click window (buttonWith window "Reset Driver and Read Status").Value
+    Assert.True(pumpUntil (fun () -> hasText window "RESET DRIVER AND READ STATUS"), "first entry did not appear")
+
+    click window (buttonWith window "Next").Value // -> Show Mouse Cursor
+    Assert.True(pumpUntil (fun () -> hasText window "SHOW MOUSE CURSOR"), "Next did not advance")
+
+    click window (buttonWith window "◀").Value // history back -> Reset Driver
+    Assert.True(pumpUntil (fun () -> hasText window "RESET DRIVER AND READ STATUS"), "Back did not return")
