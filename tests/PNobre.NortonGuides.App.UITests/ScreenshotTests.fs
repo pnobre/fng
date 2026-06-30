@@ -31,18 +31,33 @@ let private capture (window: Window) (name: string) =
         Directory.CreateDirectory dumpDir |> ignore
         frame.Save(Path.Combine(dumpDir, name))
 
-let private stateWindow (state: Shell.GuideState) (source: string option) =
-    let view = Shell.view { State = state; Source = source } ignore
-    Window(Width = 1000.0, Height = 700.0, Content = VirtualDom.create (view :> IView))
+let private modelWindow (model: Shell.Model) =
+    Window(Width = 1000.0, Height = 700.0, Content = VirtualDom.create (Shell.view model ignore :> IView))
+
+let private state s source : Shell.Model =
+    { State = s
+      Source = source
+      List = []
+      Content = None }
 
 [<AvaloniaFact>]
 let ``Main window boots`` () =
     capture (MainWindow(fun () -> async { return None })) "main-window.png"
 
 [<AvaloniaFact>]
-let ``Loaded guide renders title and credits`` () =
-    capture (stateWindow (Shell.Loaded mouseGuide) (Some "MOUSE.NG")) "loaded.png"
+let ``Loaded guide shows the three-pane layout`` () =
+    let lines =
+        match (Guide.entryAt 488 mouseGuide).Value.Body with
+        | Short ls -> ls
+        | Long _ -> []
+
+    let populated =
+        { state (Shell.Loaded mouseGuide) (Some "MOUSE.NG") with
+            List = lines
+            Content = Guide.entryAt 1335 mouseGuide }
+
+    capture (modelWindow populated) "three-pane.png"
 
 [<AvaloniaFact>]
 let ``Failed open renders an error`` () =
-    capture (stateWindow (Shell.Failed "not a Norton Guide file (magic: # )") (Some "README.md")) "failed.png"
+    capture (modelWindow (state (Shell.Failed "not a Norton Guide file (magic: # )") (Some "README.md"))) "failed.png"

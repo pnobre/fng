@@ -62,6 +62,11 @@ let ``Every real link target resolves to an entry`` () =
     Assert.All(targets, (fun o -> Assert.True(offsets.Contains o, $"offset {o} did not resolve to an entry")))
 
 [<Fact>]
+let ``entryAt finds an entry by its offset`` () =
+    Assert.Equal(Some 1335, Guide.entryAt 1335 guide |> Option.map (fun e -> e.Offset))
+    Assert.Equal(None, Guide.entryAt 999999 guide)
+
+[<Fact>]
 let ``Corrupt data is an error, not an exception`` () =
     match Guide.parse (Array.create 400 0xFFuy) with
     | Error _ -> ()

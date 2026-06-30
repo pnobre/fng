@@ -31,6 +31,15 @@ let private firstButton (window: Window) =
         | :? Button as b -> Some b
         | _ -> None)
 
+let private buttonWith (window: Window) (text: string) =
+    window.GetVisualDescendants()
+    |> Seq.tryPick (function
+        | :? Button as b ->
+            match b.Content with
+            | :? string as s when s.Contains(text) -> Some b
+            | _ -> None
+        | _ -> None)
+
 let private click (window: Window) (button: Button) =
     let centre =
         button.TranslatePoint(Point(button.Bounds.Width / 2.0, button.Bounds.Height / 2.0), window)
@@ -74,3 +83,19 @@ let ``Clicking Open on a non-guide shows an error`` () =
 
     click window (firstButton window)
     Assert.True(pumpUntil (fun () -> hasText window "Could not open guide"), "error did not appear after clicking Open")
+
+[<AvaloniaFact>]
+let ``Selecting a menu prompt then a list item shows the entry`` () =
+    let window = show (MainWindow(stub "MOUSE.NG" mouseBytes))
+    click window (firstButton window) // Open
+    Assert.True(pumpUntil (fun () -> (buttonWith window "Int 51 Services").IsSome), "menu did not load")
+
+    click window (buttonWith window "Int 51 Services").Value // populate the middle list
+
+    Assert.True(
+        pumpUntil (fun () -> (buttonWith window "Reset Driver and Read Status").IsSome),
+        "list did not populate"
+    )
+
+    click window (buttonWith window "Reset Driver and Read Status").Value // show the entry
+    Assert.True(pumpUntil (fun () -> hasText window "INT 33"), "entry content did not appear")

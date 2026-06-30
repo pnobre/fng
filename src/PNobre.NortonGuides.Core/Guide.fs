@@ -20,3 +20,9 @@ module Guide =
         with
         | :? EndOfStreamException as ex -> Error ex.Message
         | :? InvalidDataException as ex -> Error ex.Message
+
+    /// The entry that begins at the given file offset, if any. Menu prompts,
+    /// short-entry lines and see-also links all reference entries by this offset.
+    // ponytail: linear scan; lookups are user-click-driven, so a Map isn't worth it yet.
+    let entryAt (offset: int) (guide: Guide) : Entry option =
+        guide.Entries |> List.tryFind (fun e -> e.Offset = offset)
