@@ -16,8 +16,8 @@ Each task maps to a GitHub issue.
 ## Phase 2 — Avalonia desktop viewer
 
 - [/] #8 Epic: cross-platform desktop viewer over `Fng.Core` (Avalonia.FuncUI + Elmish)
-  - [/] #19 App project scaffolding (Avalonia + FuncUI + Elmish)
-  - [ ] #20 MVU shell: open a guide
+  - [x] #19 App project scaffolding (Avalonia + FuncUI + Elmish)
+  - [/] #20 MVU shell: open a guide
   - [ ] #21 Three-pane layout (navigation / list / content)
   - [ ] #22 Span → Avalonia rendering (styles + NG colour theme)
   - [ ] #23 Navigation: follow the entry offset graph
