@@ -59,5 +59,27 @@ let ``Loaded guide shows the three-pane layout`` () =
     capture (modelWindow populated) "three-pane.png"
 
 [<AvaloniaFact>]
+let ``Content renders DOS colours`` () =
+    let links =
+        { Previous = 0
+          Next = 0
+          ParentOffset = 0
+          ParentLine = 0
+          ParentMenu = 0
+          ParentPrompt = 0 }
+
+    // ^A1E: yellow (E) on blue (1); ^A4F: white (F) on red (4).
+    let entry =
+        { Offset = 0
+          Links = links
+          Body = Long([ "^A1E Yellow on blue   ^A4F White on red " ], []) }
+
+    let model =
+        { state (Shell.Loaded mouseGuide) (Some "demo") with
+            Content = Some entry }
+
+    capture (modelWindow model) "colour.png"
+
+[<AvaloniaFact>]
 let ``Failed open renders an error`` () =
     capture (modelWindow (state (Shell.Failed "not a Norton Guide file (magic: # )") (Some "README.md"))) "failed.png"

@@ -18,8 +18,8 @@ Each task maps to a GitHub issue.
 - [/] #8 Epic: cross-platform desktop viewer over `Fng.Core` (Avalonia.FuncUI + Elmish)
   - [x] #19 App project scaffolding (Avalonia + FuncUI + Elmish)
   - [x] #20 MVU shell: open a guide
-  - [/] #21 Three-pane layout (navigation / list / content)
-  - [ ] #22 Span → Avalonia rendering (styles + NG colour theme)
+  - [x] #21 Three-pane layout (navigation / list / content)
+  - [/] #22 Span → Avalonia rendering (styles + NG colour theme)
   - [ ] #23 Navigation: follow the entry offset graph
 
 ## Phase 3 — WebAssembly head
