@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/PNobre.NortonGuides.App/PNobre.NortonGuides.App.fsproj" />
     <Project Path="src/PNobre.NortonGuides.Build/PNobre.NortonGuides.Build.fsproj" />
     <Project Path="src/PNobre.NortonGuides.Cli/PNobre.NortonGuides.Cli.fsproj" />
     <Project Path="src/PNobre.NortonGuides.Core/PNobre.NortonGuides.Core.fsproj" />
