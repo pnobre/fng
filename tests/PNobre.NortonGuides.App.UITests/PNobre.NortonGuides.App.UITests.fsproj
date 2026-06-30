@@ -7,9 +7,14 @@
   <ItemGroup>
     <Compile Include="Setup.fs" />
     <Compile Include="ScreenshotTests.fs" />
+    <Compile Include="OpenGuideTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\PNobre.NortonGuides.App\PNobre.NortonGuides.App.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\PNobre.NortonGuides.Core.Tests\fixtures\MOUSE.NG" Link="fixtures/MOUSE.NG" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
