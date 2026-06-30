@@ -24,6 +24,8 @@ WebAssembly head (Phase 3) can reuse it.
 - Anything pushed MUST build, lint (`dotnet fsharplint`), and be formatted (`dotnet fantomas`).
   Run `dotnet run --project src/PNobre.NortonGuides.Build -- --target Format`, then
   `dotnet run --project src/PNobre.NortonGuides.Build`.
+- The test suite's corpus sweep requires `FNG_CORPUS` to point at a directory of `.NG`
+  guides; export it before running the suite or that test fails by design.
 
 ## Development Process
 
