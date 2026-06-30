@@ -19,28 +19,70 @@ type GuideState =
     | Loaded of Guide
     | Failed of string
 
+/// A view position: the short entry whose lines fill the middle pane, and the
+/// entry being read in the content pane.
+type Nav =
+    { List: Entry option
+      Content: Entry option }
+
 type Model =
-    {
-        State: GuideState
-        Source: string option
-        /// The middle pane: the lines of the current short entry.
-        List: Link list
-        /// The right pane: the entry being read.
-        Content: Entry option
-    }
+    { State: GuideState
+      Source: string option
+      Nav: Nav
+      Back: Nav list
+      Forward: Nav list }
 
 type Msg =
     | OpenRequested
     | OpenCancelled
     | Opened of name: string * result: Result<Guide, string>
     | Navigate of offset: int
+    | NavPrevious
+    | NavNext
+    | NavParent
+    | GoBack
+    | GoForward
+
+let private emptyNav = { List = None; Content = None }
 
 let init () =
     { State = Empty
       Source = None
-      List = []
-      Content = None },
+      Nav = emptyNav
+      Back = []
+      Forward = [] },
     Cmd.none
+
+/// Move to the entry at `offset`, pushing the current position onto the back stack.
+let private navigateTo (offset: int) (model: Model) =
+    match model.State with
+    | Loaded guide ->
+        match guide |> Guide.entryAt offset with
+        | Some entry ->
+            let nav =
+                match entry.Body with
+                | Short _ -> { List = Some entry; Content = None }
+                | Long _ -> { model.Nav with Content = Some entry }
+
+            { model with
+                Nav = nav
+                Back = model.Nav :: model.Back
+                Forward = [] }
+        | None -> model
+    | _ -> model
+
+/// The offset reached by following a link on the focused entry (the one being read,
+/// else the current list), or None if there is none. Used to enable/run Prev/Next/Up.
+let focusedTarget (select: Entry -> int) (model: Model) : int option =
+    model.Nav.Content
+    |> Option.orElse model.Nav.List
+    |> Option.map select
+    |> Option.filter (fun offset -> offset > 0)
+
+let private navByLink select model =
+    match focusedTarget select model with
+    | Some offset -> navigateTo offset model, Cmd.none
+    | None -> model, Cmd.none
 
 let update (openFile: OpenFile) (msg: Msg) (model: Model) =
     match msg with
@@ -70,28 +112,37 @@ let update (openFile: OpenFile) (msg: Msg) (model: Model) =
             { model with
                 State = Loaded guide
                 Source = Some name
-                List = []
-                Content = None },
+                Nav = emptyNav
+                Back = []
+                Forward = [] },
             Cmd.none
         | Error e ->
             { model with
                 State = Failed e
                 Source = Some name },
             Cmd.none
-    | Navigate offset ->
-        match model.State with
-        | Loaded guide ->
-            match guide |> Guide.entryAt offset with
-            | Some entry ->
-                match entry.Body with
-                | Short lines ->
-                    { model with
-                        List = lines
-                        Content = None },
-                    Cmd.none
-                | Long _ -> { model with Content = Some entry }, Cmd.none
-            | None -> model, Cmd.none
-        | _ -> model, Cmd.none
+    | Navigate offset -> navigateTo offset model, Cmd.none
+    | NavPrevious -> navByLink (fun e -> e.Links.Previous) model
+    | NavNext -> navByLink (fun e -> e.Links.Next) model
+    | NavParent -> navByLink (fun e -> e.Links.ParentOffset) model
+    | GoBack ->
+        match model.Back with
+        | prev :: rest ->
+            { model with
+                Nav = prev
+                Back = rest
+                Forward = model.Nav :: model.Forward },
+            Cmd.none
+        | [] -> model, Cmd.none
+    | GoForward ->
+        match model.Forward with
+        | next :: rest ->
+            { model with
+                Nav = next
+                Forward = rest
+                Back = model.Nav :: model.Back },
+            Cmd.none
+        | [] -> model, Cmd.none
 
 let private monospace = FontFamily("Menlo, Consolas, Courier New, monospace")
 
@@ -168,10 +219,10 @@ let private menuPane dispatch (guide: Guide) : IView =
 
               yield! menu.Prompts |> List.map (listButton dispatch) ]
 
-let private listPane dispatch (links: Link list) : IView =
-    match links with
-    | [] -> hint "Pick a menu entry."
-    | _ -> scroll (links |> List.map (listButton dispatch))
+let private listPane dispatch (entry: Entry option) : IView =
+    match entry with
+    | Some { Body = Short lines } -> scroll (lines |> List.map (listButton dispatch))
+    | _ -> hint "Pick a menu entry."
 
 let private contentLine (line: string) : IView =
     let blocks =
@@ -181,19 +232,42 @@ let private contentLine (line: string) : IView =
 
     StackPanel.create [ StackPanel.orientation Orientation.Horizontal; StackPanel.children blocks ]
 
-let private contentPane (entry: Entry option) : IView =
+let private seeAlsoLink dispatch (link: Link) : IView =
+    Button.create
+        [ Button.content (Text.plain link.Text)
+          Button.background Brushes.Transparent
+          Button.foreground (SolidColorBrush(Color.Parse "#5599FF"))
+          Button.horizontalAlignment HorizontalAlignment.Left
+          Button.padding (Thickness(0.0, 2.0))
+          Button.onClick (fun _ -> dispatch (Navigate link.Offset)) ]
+
+let private contentPane dispatch (entry: Entry option) : IView =
     let inner =
         match entry with
         | None -> hint "Select an entry to read."
         | Some entry ->
-            let lines =
+            let lines, seeAlso =
                 match entry.Body with
-                | Long(text, _) -> text
-                | Short links -> links |> List.map _.Text
+                | Long(text, sa) -> text, sa
+                | Short links -> (links |> List.map _.Text), []
+
+            let seeAlsoViews =
+                if List.isEmpty seeAlso then
+                    []
+                else
+                    (TextBlock.create
+                        [ TextBlock.text "See also:"
+                          TextBlock.foreground defaultForeground
+                          TextBlock.fontWeight FontWeight.Bold
+                          TextBlock.margin (Thickness(0.0, 12.0, 0.0, 4.0)) ]
+                    :> IView)
+                    :: (seeAlso |> List.map (seeAlsoLink dispatch))
 
             ScrollViewer.create
                 [ ScrollViewer.horizontalScrollBarVisibility ScrollBarVisibility.Auto
-                  ScrollViewer.content (StackPanel.create [ StackPanel.children (lines |> List.map contentLine) ]) ]
+                  ScrollViewer.content (
+                      StackPanel.create [ StackPanel.children ((lines |> List.map contentLine) @ seeAlsoViews) ]
+                  ) ]
 
     Border.create [ Border.background contentBackground; Border.child inner ]
 
@@ -206,9 +280,9 @@ let private threePane dispatch (model: Model) (guide: Guide) : IView =
           Grid.children
               [ pane 0 (menuPane dispatch guide)
                 GridSplitter.create [ Grid.column 1; GridSplitter.background Brushes.DimGray ]
-                pane 2 (listPane dispatch model.List)
+                pane 2 (listPane dispatch model.Nav.List)
                 GridSplitter.create [ Grid.column 3; GridSplitter.background Brushes.DimGray ]
-                pane 4 (contentPane model.Content) ] ]
+                pane 4 (contentPane dispatch model.Nav.Content) ] ]
 
 let private body (model: Model) (dispatch: Msg -> unit) : IView =
     match model.State with
@@ -221,11 +295,19 @@ let private body (model: Model) (dispatch: Msg -> unit) : IView =
               TextBlock.margin (Thickness 12.0) ]
     | Loaded guide -> threePane dispatch model guide
 
+let private actionButton dispatch (label: string) enabled msg : IView =
+    Button.create
+        [ Button.content label
+          Button.isEnabled enabled
+          Button.onClick (fun _ -> dispatch msg) ]
+
 let view (model: Model) (dispatch: Msg -> unit) =
     let title =
         match model.State with
         | Loaded guide -> guide.Header.Title
         | _ -> model.Source |> Option.defaultValue ""
+
+    let canFollow select = (focusedTarget select model).IsSome
 
     let toolbar =
         Border.create
@@ -235,12 +317,18 @@ let view (model: Model) (dispatch: Msg -> unit) =
               Border.child (
                   StackPanel.create
                       [ StackPanel.orientation Orientation.Horizontal
-                        StackPanel.spacing 12.0
+                        StackPanel.spacing 6.0
                         StackPanel.children
                             [ Button.create [ Button.content "Open…"; Button.onClick (fun _ -> dispatch OpenRequested) ]
+                              actionButton dispatch "◀" (not (List.isEmpty model.Back)) GoBack
+                              actionButton dispatch "▶" (not (List.isEmpty model.Forward)) GoForward
+                              actionButton dispatch "Prev" (canFollow (fun e -> e.Links.Previous)) NavPrevious
+                              actionButton dispatch "Next" (canFollow (fun e -> e.Links.Next)) NavNext
+                              actionButton dispatch "Up" (canFollow (fun e -> e.Links.ParentOffset)) NavParent
                               TextBlock.create
                                   [ TextBlock.text title
                                     TextBlock.verticalAlignment VerticalAlignment.Center
+                                    TextBlock.margin (Thickness(8.0, 0.0, 0.0, 0.0))
                                     TextBlock.foreground Brushes.LightGray ] ] ]
               ) ]
 

@@ -19,8 +19,8 @@ Each task maps to a GitHub issue.
   - [x] #19 App project scaffolding (Avalonia + FuncUI + Elmish)
   - [x] #20 MVU shell: open a guide
   - [x] #21 Three-pane layout (navigation / list / content)
-  - [/] #22 Span → Avalonia rendering (styles + NG colour theme)
-  - [ ] #23 Navigation: follow the entry offset graph
+  - [x] #22 Span → Avalonia rendering (styles + NG colour theme)
+  - [/] #23 Navigation: follow the entry offset graph
 
 ## Phase 3 — WebAssembly head
 

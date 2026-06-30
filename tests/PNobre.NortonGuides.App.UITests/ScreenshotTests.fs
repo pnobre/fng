@@ -37,8 +37,9 @@ let private modelWindow (model: Shell.Model) =
 let private state s source : Shell.Model =
     { State = s
       Source = source
-      List = []
-      Content = None }
+      Nav = { List = None; Content = None }
+      Back = []
+      Forward = [] }
 
 [<AvaloniaFact>]
 let ``Main window boots`` () =
@@ -46,15 +47,11 @@ let ``Main window boots`` () =
 
 [<AvaloniaFact>]
 let ``Loaded guide shows the three-pane layout`` () =
-    let lines =
-        match (Guide.entryAt 488 mouseGuide).Value.Body with
-        | Short ls -> ls
-        | Long _ -> []
-
     let populated =
         { state (Shell.Loaded mouseGuide) (Some "MOUSE.NG") with
-            List = lines
-            Content = Guide.entryAt 1335 mouseGuide }
+            Nav =
+                { List = Guide.entryAt 488 mouseGuide
+                  Content = Guide.entryAt 1335 mouseGuide } }
 
     capture (modelWindow populated) "three-pane.png"
 
@@ -76,9 +73,37 @@ let ``Content renders DOS colours`` () =
 
     let model =
         { state (Shell.Loaded mouseGuide) (Some "demo") with
-            Content = Some entry }
+            Nav = { List = None; Content = Some entry } }
 
     capture (modelWindow model) "colour.png"
+
+[<AvaloniaFact>]
+let ``Content shows see-also links`` () =
+    let links =
+        { Previous = 0
+          Next = 0
+          ParentOffset = 0
+          ParentLine = 0
+          ParentMenu = 0
+          ParentPrompt = 0 }
+
+    let entry =
+        { Offset = 0
+          Links = links
+          Body =
+            Long(
+                [ " ^bMouse Reset^b"; ""; " Resets the driver." ],
+                [ { Text = "Show Mouse Cursor"
+                    Offset = 1650 }
+                  { Text = "Hide Mouse Cursor"
+                    Offset = 1795 } ]
+            ) }
+
+    let model =
+        { state (Shell.Loaded mouseGuide) (Some "demo") with
+            Nav = { List = None; Content = Some entry } }
+
+    capture (modelWindow model) "see-also.png"
 
 [<AvaloniaFact>]
 let ``Failed open renders an error`` () =
