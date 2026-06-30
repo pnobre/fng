@@ -13,8 +13,6 @@ open Avalonia.VisualTree
 open Xunit
 open PNobre.NortonGuides.App
 
-let private dumpDir = Environment.GetEnvironmentVariable "FNG_UI_SHOTS"
-
 let private mouseBytes =
     File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "fixtures", "MOUSE.NG"))
 
@@ -63,18 +61,11 @@ let private pumpUntil (predicate: unit -> bool) =
 
     ok
 
-let private dump (window: Window) name =
-    if not (String.IsNullOrEmpty dumpDir) then
-        Directory.CreateDirectory dumpDir |> ignore
-        window.CaptureRenderedFrame().Save(Path.Combine(dumpDir, name))
-
 [<AvaloniaFact>]
 let ``Clicking Open loads and shows the guide`` () =
     let window = show (MainWindow(stub "MOUSE.NG" mouseBytes))
     click window (firstButton window)
-    let ok = pumpUntil (fun () -> hasText window "Mouse Services")
-    dump window "after-open.png"
-    Assert.True(ok, "guide title did not appear after clicking Open")
+    Assert.True(pumpUntil (fun () -> hasText window "Mouse Services"), "guide title did not appear after clicking Open")
 
 [<AvaloniaFact>]
 let ``Clicking Open on a non-guide shows an error`` () =
