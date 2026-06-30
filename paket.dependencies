@@ -16,3 +16,6 @@ nuget Avalonia.Themes.Fluent 11.3.13
 nuget Avalonia.Fonts.Inter 11.3.13
 nuget Avalonia.FuncUI 1.6.0
 nuget Avalonia.FuncUI.Elmish 1.6.0
+nuget Avalonia.Skia 11.3.13
+nuget Avalonia.Headless 11.3.13
+nuget Avalonia.Headless.XUnit 11.3.13

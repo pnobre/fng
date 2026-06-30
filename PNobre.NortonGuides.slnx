@@ -6,6 +6,7 @@
     <Project Path="src/PNobre.NortonGuides.Core/PNobre.NortonGuides.Core.fsproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PNobre.NortonGuides.App.UITests/PNobre.NortonGuides.App.UITests.fsproj" />
     <Project Path="tests/PNobre.NortonGuides.Core.Tests/PNobre.NortonGuides.Core.Tests.fsproj" />
   </Folder>
 </Solution>
