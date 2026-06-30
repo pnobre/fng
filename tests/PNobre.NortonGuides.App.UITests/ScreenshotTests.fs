@@ -37,7 +37,7 @@ let private stateWindow (state: Shell.GuideState) (source: string option) =
 
 [<AvaloniaFact>]
 let ``Main window boots`` () =
-    capture (MainWindow()) "main-window.png"
+    capture (MainWindow(fun () -> async { return None })) "main-window.png"
 
 [<AvaloniaFact>]
 let ``Loaded guide renders title and credits`` () =

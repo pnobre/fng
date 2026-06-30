@@ -40,7 +40,17 @@ let update (openFile: OpenFile) (msg: Msg) (model: Model) =
                 | None -> return OpenCancelled
             }
 
-        model, Cmd.OfAsync.perform pick () id
+        // Run on the dispatching (UI) thread: Cmd.OfAsync hops to a thread pool,
+        // where the file dialog and the follow-up dispatch both misbehave.
+        let run dispatch =
+            Async.StartImmediate(
+                async {
+                    let! msg = pick ()
+                    dispatch msg
+                }
+            )
+
+        model, [ run ]
     | OpenCancelled -> model, Cmd.none
     | Opened(name, result) ->
         let state =
