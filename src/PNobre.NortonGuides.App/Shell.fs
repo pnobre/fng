@@ -3,6 +3,7 @@ module PNobre.NortonGuides.App.Shell
 open Elmish
 open Avalonia
 open Avalonia.Controls
+open Avalonia.Controls.Primitives
 open Avalonia.Layout
 open Avalonia.Media
 open Avalonia.FuncUI.DSL
@@ -94,6 +95,51 @@ let update (openFile: OpenFile) (msg: Msg) (model: Model) =
 
 let private monospace = FontFamily("Menlo, Consolas, Courier New, monospace")
 
+// The DOS 16-colour (CGA) palette, indexed by attribute nibble.
+let private dosPalette =
+    [| "#000000"
+       "#0000AA"
+       "#00AA00"
+       "#00AAAA"
+       "#AA0000"
+       "#AA00AA"
+       "#AA5500"
+       "#AAAAAA"
+       "#555555"
+       "#5555FF"
+       "#55FF55"
+       "#55FFFF"
+       "#FF5555"
+       "#FF55FF"
+       "#FFFF55"
+       "#FFFFFF" |]
+    |> Array.map (fun hex -> SolidColorBrush(Color.Parse hex) :> IBrush)
+
+// Entry text renders on a dark "terminal" background, where the DOS colours read true.
+let private contentBackground = SolidColorBrush(Color.Parse "#1E1E1E") :> IBrush
+let private defaultForeground = SolidColorBrush(Color.Parse "#D4D4D4") :> IBrush
+
+let private brushes (style: Style) =
+    let fg, bg =
+        match style.Colour with
+        | Some c -> dosPalette[c.Foreground &&& 15], dosPalette[c.Background &&& 15]
+        | None -> defaultForeground, contentBackground
+
+    if style.Reverse then bg, fg else fg, bg
+
+let private spanBlock (span: Span) : IView =
+    let fg, bg = brushes span.Style
+
+    TextBlock.create
+        [ TextBlock.text span.Text
+          TextBlock.fontFamily monospace
+          TextBlock.foreground fg
+          TextBlock.background bg
+          if span.Style.Bold then
+              TextBlock.fontWeight FontWeight.Bold
+          if span.Style.Underline then
+              TextBlock.textDecorations TextDecorations.Underline ]
+
 let private listButton dispatch (link: Link) : IView =
     Button.create
         [ Button.content (Text.plain link.Text)
@@ -127,18 +173,29 @@ let private listPane dispatch (links: Link list) : IView =
     | [] -> hint "Pick a menu entry."
     | _ -> scroll (links |> List.map (listButton dispatch))
 
-let private contentPane (entry: Entry option) : IView =
-    match entry with
-    | None -> hint "Select an entry to read."
-    | Some entry ->
-        let lines =
-            match entry.Body with
-            | Long(text, _) -> text
-            | Short links -> links |> List.map _.Text
+let private contentLine (line: string) : IView =
+    let blocks =
+        match Text.decode line with
+        | [] -> [ TextBlock.create [ TextBlock.text " "; TextBlock.fontFamily monospace ] :> IView ] // keep blank lines tall
+        | spans -> spans |> List.map spanBlock
 
-        // ponytail: plain text for now; styled spans (bold/colour) arrive with #22.
-        scroll
-            [ for line in lines -> TextBlock.create [ TextBlock.text (Text.plain line); TextBlock.fontFamily monospace ] ]
+    StackPanel.create [ StackPanel.orientation Orientation.Horizontal; StackPanel.children blocks ]
+
+let private contentPane (entry: Entry option) : IView =
+    let inner =
+        match entry with
+        | None -> hint "Select an entry to read."
+        | Some entry ->
+            let lines =
+                match entry.Body with
+                | Long(text, _) -> text
+                | Short links -> links |> List.map _.Text
+
+            ScrollViewer.create
+                [ ScrollViewer.horizontalScrollBarVisibility ScrollBarVisibility.Auto
+                  ScrollViewer.content (StackPanel.create [ StackPanel.children (lines |> List.map contentLine) ]) ]
+
+    Border.create [ Border.background contentBackground; Border.child inner ]
 
 let private pane column (child: IView) : IView =
     Border.create [ Grid.column column; Border.child child ]
